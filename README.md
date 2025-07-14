@@ -1,5 +1,7 @@
 # Setup Godot Action
 
+![example](docs/example.png)
+
 <p align = "center">
     <strong>
         <a href="https://appsinacup.com">Website</a> | <a href="https://discord.gg/56dMud8HYn">Discord</a>
