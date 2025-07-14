@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  test-godot-setup:
+  test-godot-setup-linux:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -19,4 +19,30 @@ jobs:
           platform: 'linux.x86_64'
       - name: Check Godot version
         run: |
-          GODOT_BIN_PATH --version
+          $GODOT_BIN_PATH --version
+  test-godot-setup-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Godot
+        uses: ./
+        with:
+          version: '4.4.1-stable'
+          platform: 'macos.universal'
+      - name: Check Godot version
+        run: |
+          $GODOT_BIN_PATH --version
+  test-godot-setup-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Godot
+        uses: ./
+        with:
+          version: '4.4.1-stable'
+          platform: 'win64.exe'
+      - name: Check Godot version
+        run: |
+          $GODOT_BIN_PATH --version
