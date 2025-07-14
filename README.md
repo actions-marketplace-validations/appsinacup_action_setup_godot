@@ -21,7 +21,7 @@ Sets up the Godot Engine from the official GitHub releases for Linux, macOS, or 
 
 ```yaml
 - name: Setup Godot
-  uses: your-org/setup-godot-action@v1
+  uses: appsinacup/setup-godot-action@main
   with:
     version: '4.4.1-stable'
     platform: 'linux.x86_64'
