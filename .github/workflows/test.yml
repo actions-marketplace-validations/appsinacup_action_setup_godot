@@ -19,7 +19,7 @@ jobs:
           platform: 'linux.x86_64'
       - name: Check Godot version
         run: |
-          $GODOT_BIN_PATH --version
+          $GODOT4 --version
   test-godot-setup-macos:
     runs-on: macos-latest
     steps:
@@ -32,7 +32,7 @@ jobs:
           platform: 'macos.universal'
       - name: Check Godot version
         run: |
-          $GODOT_BIN_PATH --version
+          $GODOT4 --version
   test-godot-setup-windows:
     runs-on: windows-latest
     steps:
@@ -45,4 +45,4 @@ jobs:
           platform: 'win64.exe'
       - name: Check Godot version
         run: |
-          $GODOT_BIN_PATH --version
+          $GODOT4 --version

@@ -1,11 +1,11 @@
 # Setup Godot Action
 
-This GitHub Action sets up the Godot Engine from the official GitHub releases for Linux, macOS, or Windows. It automatically downloads, extracts, and makes the Godot binary available in your workflow.
+Sets up the Godot Engine from the official GitHub releases for Linux, macOS, or Windows.
 
 ## Inputs
 
-- `version`: Godot version (e.g. `4.4.1-stable`). **Required**
-- `platform`: Platform string (e.g. `linux.x86_64`, `macos.universal`, `win64.exe`). **Required**
+- `version`: e.g. `4.4.1-stable`.
+- `platform`: e.g. `linux.x86_64`, `macos.universal`, `win64.exe`).
 
 ## Outputs
 
