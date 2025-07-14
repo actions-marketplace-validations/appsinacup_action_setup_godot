@@ -2,8 +2,9 @@
 
 
 <p align = "center">
-
     <img src="https://github.com/appsinacup/action_setup_godot/blob/main/docs/example.png?raw=true"/>
+</p>
+<p align = "center">
     <strong>
         <a href="https://appsinacup.com">Website</a> | <a href="https://discord.gg/56dMud8HYn">Discord</a>
     </strong>
