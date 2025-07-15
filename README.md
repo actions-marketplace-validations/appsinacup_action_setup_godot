@@ -9,8 +9,11 @@ Sets up the Godot Engine from the official GitHub releases for Linux, macOS, or 
 
 ## Inputs
 
-- `version`: e.g. `4.4.1-stable`.
-- `platform`: e.g. `linux.x86_64`, `macos.universal`, `win64.exe`).
+- `version`: e.g. `4.4.1-stable` (required)
+- `bin-path`: Path for binaries to be installed to (default: `godot-bin`)
+- `download_editor`: Download the Godot Editor binary (`true`/`false`, default: `true`)
+- `download_template`: Download export templates (`true`/`false`, default: `false`)
+- `mono`: Download Mono version (C# support) (`true`/`false`, default: `false`)
 
 ## Outputs
 

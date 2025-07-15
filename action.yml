@@ -121,4 +121,3 @@ runs:
           ls "$HOME/AppData/Roaming/Godot/export_templates/$version_dot"
           echo "GODOT_TEMPLATE=\"$HOME/AppData/Roaming/Godot/export_templates/$version_dot\"" >> $GITHUB_ENV
         fi
-        fi
