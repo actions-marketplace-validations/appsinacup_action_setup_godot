@@ -19,7 +19,7 @@ inputs:
     description: 'Download Mono version (C# support)'
     default: 'false'
 
-author: Appsinacup
+author: Apps In a Cup
 branding:
   icon: 'terminal'
   color: 'blue'
