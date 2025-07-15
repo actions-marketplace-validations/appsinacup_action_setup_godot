@@ -19,6 +19,11 @@ inputs:
     description: 'Download Mono version (C# support)'
     default: 'false'
 
+author: Appsinacup
+branding:
+  icon: 'terminal'
+  color: 'blue'
+
 runs:
   using: 'composite'
   steps:
