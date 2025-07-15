@@ -6,38 +6,119 @@ inputs:
   version:
     description: 'Godot version (e.g. 4.4-stable)'
     required: true
-  platform:
-    description: 'Platform (e.g. macos.universal, linux.x86_64, win64.exe)'
-    required: true
+  bin-path:
+    description: 'Path for binaries to be installed to, relative to the current working directory of the action. This is the path that will be added to the system path.'
+    default: 'godot-bin'
+  download_editor:
+    description: 'Download Godot Editor binary'
+    default: 'true'
+  download_template:
+    description: 'Download Godot export templates'
+    default: 'false'
+  mono:
+    description: 'Download Mono version (C# support)'
+    default: 'false'
 
 runs:
   using: 'composite'
   steps:
-    - name: Download Godot release
+    - name: Download Godot Editor
       shell: bash
       run: |
-        GODOT_VERSION=${{ inputs.version }}
-        GODOT_PLATFORM=${{ inputs.platform }}
-        GODOT_ARCH=${{ inputs.arch }}
-        GODOT_RELEASE_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_${GODOT_PLATFORM}.zip"
-        echo "Downloading $GODOT_RELEASE_URL"
-        curl -L "$GODOT_RELEASE_URL" -o godot.zip
-        unzip godot.zip -d godot-bin
-        chmod -R +x godot-bin/*
-        # Find the Godot binary depending on platform
-        GODOT_BIN_PATH=""
-        if [[ "$GODOT_PLATFORM" == macos* ]]; then
-          # macOS: Godot.app/Contents/MacOS/Godot
-          GODOT_BIN_PATH=$(find godot-bin -type f -path "*/Godot.app/Contents/MacOS/Godot" | head -n 1)
-        elif [[ "$GODOT_PLATFORM" == win* ]]; then
-          # Windows: prefer _console.exe if present, else .exe
-          GODOT_BIN_PATH=$(find godot-bin -type f -name "*_console.exe" | head -n 1)
-          if [[ -z "$GODOT_BIN_PATH" ]]; then
-            GODOT_BIN_PATH=$(find godot-bin -type f -name "*.exe" | head -n 1)
-          fi
-        else
-          # Linux: single binary
-          GODOT_BIN_PATH=$(find godot-bin -type f -executable -name "Godot*" | head -n 1)
+        GODOT_VERSION="${{ inputs.version }}"
+        BIN_PATH="${{ inputs.bin-path }}"
+        DOWNLOAD_EDITOR="${{ inputs.download_editor }}"
+        MONO="${{ inputs.mono }}"
+
+        if [ -d "$BIN_PATH" ]; then
+          rm -rf "$BIN_PATH"
         fi
-        echo "GODOT4=$GODOT_BIN_PATH" >> $GITHUB_ENV
-        echo "$(dirname $GODOT_BIN_PATH)" >> $GITHUB_PATH
+        mkdir -p "$BIN_PATH"
+
+        if [[ "$DOWNLOAD_EDITOR" == "true" ]]; then
+          # Detect OS using GitHub Actions runner.os
+          if [ "${{ runner.os }}" == "Linux" ]; then
+            GODOT_PLATFORM="linux.x86_64"
+          elif [ "${{ runner.os }}" == "macOS" ]; then
+            GODOT_PLATFORM="macos.universal"
+          elif [ "${{ runner.os }}" == "Windows" ]; then
+            GODOT_PLATFORM="win64.exe"
+          else
+            echo "Unknown OS: ${{ runner.os }}"; exit 1
+          fi
+          # Determine if mono build is needed
+          if [[ "$MONO" == "true" ]]; then
+            GODOT_EDITOR_NAME="Godot_v${GODOT_VERSION}-mono_${GODOT_PLATFORM}.zip"
+          else
+            GODOT_EDITOR_NAME="Godot_v${GODOT_VERSION}_${GODOT_PLATFORM}.zip"
+          fi
+          GODOT_RELEASE_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/$GODOT_EDITOR_NAME"
+          echo "Downloading $GODOT_RELEASE_URL"
+          curl -L "$GODOT_RELEASE_URL" -o godot_editor.zip
+          unzip -o godot_editor.zip -d "$BIN_PATH"
+          chmod -R +x "$BIN_PATH"/*
+          # Find the Godot binary depending on platform
+          GODOT_BIN_PATH=""
+          if [[ "$GODOT_PLATFORM" == macos* ]]; then
+            GODOT_BIN_PATH=$(find "$BIN_PATH" -type f -path "*/Godot.app/Contents/MacOS/Godot" | head -n 1)
+          elif [[ "$GODOT_PLATFORM" == win* ]]; then
+            GODOT_BIN_PATH=$(find "$BIN_PATH" -type f -name "*_console.exe" | head -n 1)
+            if [[ -z "$GODOT_BIN_PATH" ]]; then
+              GODOT_BIN_PATH=$(find "$BIN_PATH" -type f -name "*.exe" | head -n 1)
+            fi
+          else
+            GODOT_BIN_PATH=$(find "$BIN_PATH" -type f -executable -name "Godot*" | head -n 1)
+          fi
+          echo "GODOT4=$GODOT_BIN_PATH" >> $GITHUB_ENV
+          echo "$(dirname $GODOT_BIN_PATH)" >> $GITHUB_PATH
+        fi
+    - name: Download and Setup Godot Templates
+      shell: bash
+      if: inputs.download_template == 'true'
+      run: |
+        GODOT_VERSION="${{ inputs.version }}"
+        BIN_PATH="${{ inputs.bin-path }}"
+        MONO="${{ inputs.mono }}"
+        mkdir -p "$BIN_PATH/templates"
+        # Detect OS using GitHub Actions runner.os
+        if [ "${{ runner.os }}" == "Linux" ]; then
+          PLATFORM="linux"
+        elif [ "${{ runner.os }}" == "macOS" ]; then
+          PLATFORM="macos"
+        elif [ "${{ runner.os }}" == "Windows" ]; then
+          PLATFORM="windows"
+        else
+          echo "Unknown OS: ${{ runner.os }}"; exit 1
+        fi
+        if [[ "$MONO" == "true" ]]; then
+          GODOT_TEMPLATE_NAME="Godot_v${GODOT_VERSION}-mono_export_templates.tpz"
+        else
+          GODOT_TEMPLATE_NAME="Godot_v${GODOT_VERSION}_export_templates.tpz"
+        fi
+        GODOT_TEMPLATE_URL="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/$GODOT_TEMPLATE_NAME"
+        echo "Downloading $GODOT_TEMPLATE_URL"
+        curl -L "$GODOT_TEMPLATE_URL" -o "$BIN_PATH/templates/$GODOT_TEMPLATE_NAME"
+        file=$(ls "$BIN_PATH/templates")
+        if [[ "$GODOT_VERSION" != *-* ]]; then
+          version_dot="$GODOT_VERSION.release"
+        else
+          version_dot=$(echo "$GODOT_VERSION" | sed 's/-/./')
+        fi
+        echo "Unzipping template"
+        if [[ "$PLATFORM" == "macos" ]]; then
+          mkdir -p "/Users/runner/Library/Application Support/Godot/export_templates/$version_dot"
+          unzip -o "$BIN_PATH/templates/$file" -d "/Users/runner/Library/Application Support/Godot/export_templates/$version_dot"
+          ls "/Users/runner/Library/Application Support/Godot/export_templates/$version_dot"
+          echo "GODOT_TEMPLATE=\"/Users/runner/Library/Application Support/Godot/export_templates/$version_dot\"" >> $GITHUB_ENV
+        elif [[ "$PLATFORM" == "linux" ]]; then
+          mkdir -p $HOME/.local/share/godot/export_templates/$version_dot
+          unzip -o "$BIN_PATH/templates/$file" -d $HOME/.local/share/godot/export_templates/$version_dot
+          ls $HOME/.local/share/godot/export_templates/$version_dot
+          echo "GODOT_TEMPLATE=$HOME/.local/share/godot/export_templates/$version_dot" >> $GITHUB_ENV
+        else
+          mkdir -p "$HOME/AppData/Roaming/Godot/export_templates/$version_dot"
+          unzip -o "$BIN_PATH/templates/$file" -d "$HOME/AppData/Roaming/Godot/export_templates/$version_dot"
+          ls "$HOME/AppData/Roaming/Godot/export_templates/$version_dot"
+          echo "GODOT_TEMPLATE=\"$HOME/AppData/Roaming/Godot/export_templates/$version_dot\"" >> $GITHUB_ENV
+        fi
+        fi
