@@ -9,6 +9,10 @@ inputs:
   version:
     description: 'Godot version (e.g. 4.4-stable)'
     required: true
+  release-tag:
+    description: 'If empty will use same as version.'
+    required: false
+    default: ''
   bin-path:
     description: 'Path for binaries to be installed to, relative to the current working directory of the action. This is the path that will be added to the system path.'
     default: 'godot-bin'
@@ -34,6 +38,10 @@ runs:
       shell: bash
       run: |
         GODOT_VERSION="${{ inputs.version }}"
+        GODOT_RELEASE="${{ inputs.release-tag }}"
+        if [ -z "$GODOT_RELEASE" ]; then
+          GODOT_RELEASE="$GODOT_VERSION"
+        fi
         BIN_PATH="${{ inputs.bin-path }}"
         DOWNLOAD_EDITOR="${{ inputs.download_editor }}"
         MONO="${{ inputs.mono }}"
@@ -68,7 +76,7 @@ runs:
           else
             GODOT_EDITOR_NAME="Godot_v${GODOT_VERSION}_${GODOT_PLATFORM}.zip"
           fi
-          GODOT_RELEASE_URL="https://github.com/${{ inputs.repo }}/releases/download/${GODOT_VERSION}/$GODOT_EDITOR_NAME"
+          GODOT_RELEASE_URL="https://github.com/${{ inputs.repo }}/releases/download/${GODOT_RELEASE}/$GODOT_EDITOR_NAME"
           echo "Downloading $GODOT_RELEASE_URL"
           curl -L "$GODOT_RELEASE_URL" -o godot_editor.zip
           unzip -o godot_editor.zip -d "$BIN_PATH"
@@ -93,6 +101,10 @@ runs:
       if: inputs.download_template == 'true'
       run: |
         GODOT_VERSION="${{ inputs.version }}"
+        GODOT_RELEASE="${{ inputs.release-tag }}"
+        if [ -z "$GODOT_RELEASE" ]; then
+          GODOT_RELEASE="$GODOT_VERSION"
+        fi
         BIN_PATH="${{ inputs.bin-path }}"
         MONO="${{ inputs.mono }}"
         mkdir -p "$BIN_PATH/templates"
@@ -111,7 +123,7 @@ runs:
         else
           GODOT_TEMPLATE_NAME="Godot_v${GODOT_VERSION}_export_templates.tpz"
         fi
-        GODOT_TEMPLATE_URL="https://github.com/${{ inputs.repo }}/releases/download/${GODOT_VERSION}/$GODOT_TEMPLATE_NAME"
+        GODOT_TEMPLATE_URL="https://github.com/${{ inputs.repo }}/releases/download/${GODOT_RELEASE}/$GODOT_TEMPLATE_NAME"
         echo "Downloading $GODOT_TEMPLATE_URL"
         curl -L "$GODOT_TEMPLATE_URL" -o "$BIN_PATH/templates/$GODOT_TEMPLATE_NAME"
         file=$(ls "$BIN_PATH/templates")

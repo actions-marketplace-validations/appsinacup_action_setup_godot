@@ -15,7 +15,8 @@ jobs:
       - name: Setup Godot (editor only)
         uses: ./
         with:
-          version: 'main'
+          version: '4.4.1-stable'
+          release-tag: '1.2.3'
           repo: 'appsinacup/action_godot_builder'
       - name: Check Godot version
         run: |
@@ -23,7 +24,8 @@ jobs:
       - name: Setup Godot (editor + templates)
         uses: ./
         with:
-          version: 'main'
+          version: '4.4.1-stable'
+          release-tag: '1.2.3'
           repo: 'appsinacup/action_godot_builder'
           download_template: 'true'
       - name: Check templates
@@ -37,7 +39,8 @@ jobs:
       - name: Setup Godot (editor only)
         uses: ./
         with:
-          version: 'main'
+          version: '4.4.1-stable'
+          release-tag: '1.2.3'
           repo: 'appsinacup/action_godot_builder'
       - name: Check Godot version
         run: |
@@ -45,7 +48,8 @@ jobs:
       - name: Setup Godot (editor + templates)
         uses: ./
         with:
-          version: 'main'
+          version: '4.4.1-stable'
+          release-tag: '1.2.3'
           repo: 'appsinacup/action_godot_builder'
           download_template: 'true'
       - name: Check templates
@@ -59,7 +63,8 @@ jobs:
       - name: Setup Godot (editor only)
         uses: ./
         with:
-          version: 'main'
+          version: '4.4.1-stable'
+          release-tag: '1.2.3'
           repo: 'appsinacup/action_godot_builder'
       - name: Check Godot version
         shell: pwsh
@@ -68,7 +73,8 @@ jobs:
       - name: Setup Godot (editor + templates)
         uses: ./
         with:
-          version: 'main'
+          version: '4.4.1-stable'
+          release-tag: '1.2.3'
           repo: 'appsinacup/action_godot_builder'
           download_template: 'true'
       - name: Check templates

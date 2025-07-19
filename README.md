@@ -11,6 +11,7 @@ Sets up the Godot Engine from the official GitHub releases for Linux, macOS, or 
 
 - `repo`: e.g. `godotengine/godot`
 - `version`: e.g. `4.4.1-stable` (required)
+- `release-tag`: Override in case release name is differnet from version. If empty defaults to version. (default: ``)
 - `bin-path`: Path for binaries to be installed to (default: `godot-bin`)
 - `download_editor`: Download the Godot Editor binary (`true`/`false`, default: `true`)
 - `download_template`: Download export templates (`true`/`false`, default: `false`)
