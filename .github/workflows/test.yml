@@ -7,6 +7,74 @@ on:
     branches: [ main ]
 
 jobs:
+  test-godot-setup-linux-simple:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Godot (editor only)
+        uses: ./
+        with:
+          version: 'main'
+          repo: 'appsinacup/action_godot_builder'
+      - name: Check Godot version
+        run: |
+          $GODOT4 --version
+      - name: Setup Godot (editor + templates)
+        uses: ./
+        with:
+          version: 'main'
+          repo: 'appsinacup/action_godot_builder'
+          download_template: 'true'
+      - name: Check templates
+        run: |
+          ls godot-bin/templates || echo "No templates found"
+  test-godot-setup-macos-simple:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Godot (editor only)
+        uses: ./
+        with:
+          version: 'main'
+          repo: 'appsinacup/action_godot_builder'
+      - name: Check Godot version
+        run: |
+          $GODOT4 --version
+      - name: Setup Godot (editor + templates)
+        uses: ./
+        with:
+          version: 'main'
+          repo: 'appsinacup/action_godot_builder'
+          download_template: 'true'
+      - name: Check templates
+        run: |
+          ls godot-bin/templates || echo "No templates found"
+  test-godot-setup-windows-simple:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Godot (editor only)
+        uses: ./
+        with:
+          version: 'main'
+          repo: 'appsinacup/action_godot_builder'
+      - name: Check Godot version
+        shell: pwsh
+        run: |
+          & $env:GODOT4 --version
+      - name: Setup Godot (editor + templates)
+        uses: ./
+        with:
+          version: 'main'
+          repo: 'appsinacup/action_godot_builder'
+          download_template: 'true'
+      - name: Check templates
+        shell: pwsh
+        run: |
+          Get-ChildItem godot-bin/templates -ErrorAction SilentlyContinue
   test-godot-setup-linux:
     runs-on: ubuntu-latest
     steps:
