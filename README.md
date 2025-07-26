@@ -24,11 +24,28 @@ Sets up the Godot Engine from the official GitHub releases for Linux, macOS, or 
 
 ## Example Usage
 
+For normal Godot Release:
+
 ```yaml
 - name: Setup Godot
   uses: appsinacup/setup-godot-action@main
   with:
     version: '4.4.1-stable'
+
+- name: Check Godot version
+  run: |
+    $GODOT4 --version
+```
+
+For custom Godot Release:
+
+```yaml
+- name: Setup Godot (2D Optimized)
+  uses: appsinacup/setup-godot-action@main
+  with:
+    version: '4.4.1-stable'
+    release-tag: '3d-disable'
+    repo: 'appsinacup/action_godot_builder'
 
 - name: Check Godot version
   run: |
