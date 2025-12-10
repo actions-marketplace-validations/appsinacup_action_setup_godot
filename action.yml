@@ -157,11 +157,17 @@ runs:
           fi
         fi
         mkdir -p "$EXPORT_PATH"
-        unzip -o "$BIN_PATH/templates/$file" -d "$EXPORT_PATH"
-        # Move up all files from templates/ if present
-        if [ -d "$EXPORT_PATH/templates" ]; then
-          mv "$EXPORT_PATH/templates"/* "$EXPORT_PATH/"
-          rmdir "$EXPORT_PATH/templates"
+        # Create temp dir for extraction
+        TEMP_DIR=$(mktemp -d)
+        unzip -o "$BIN_PATH/templates/$file" -d "$TEMP_DIR"
+        # Move contents of templates folder to export path
+        if [ -d "$TEMP_DIR/templates" ]; then
+          mv "$TEMP_DIR/templates"/* "$EXPORT_PATH/"
+        else
+          # If no templates folder, move everything
+          mv "$TEMP_DIR"/* "$EXPORT_PATH/"
         fi
+        # Clean up temp dir
+        rm -rf "$TEMP_DIR"
         ls "$EXPORT_PATH"
         echo "GODOT_TEMPLATE=$EXPORT_PATH" >> $GITHUB_ENV
