@@ -25,6 +25,9 @@ inputs:
   mono:
     description: 'Download Mono version (C# support)'
     default: 'false'
+  enable_cache:
+    description: 'Enable caching of downloaded files'
+    default: 'false'
 
 author: Apps In a Cup
 branding:
@@ -40,7 +43,27 @@ runs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libwebkit2gtk-4.1-0 libgtk-3-0
+    - name: Cache Godot Editor
+      if: inputs.download_editor == 'true' && inputs.enable_cache == 'true'
+      id: cache-editor
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.bin-path }}
+        key: godot-editor-${{ inputs.repo }}-${{ inputs.version }}-${{ inputs.mono }}-${{ runner.os }}
+        restore-keys: |
+          godot-editor-${{ inputs.repo }}-${{ inputs.version }}-${{ inputs.mono }}-
+          godot-editor-${{ inputs.repo }}-${{ inputs.version }}-
+    - name: Cache Godot Templates
+      if: inputs.download_template == 'true' && inputs.enable_cache == 'true'
+      id: cache-templates
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.bin-path }}/templates
+        key: godot-templates-${{ inputs.repo }}-${{ inputs.version }}-${{ inputs.mono }}
+        restore-keys: |
+          godot-templates-${{ inputs.repo }}-${{ inputs.version }}-
     - name: Download Godot Editor
+      if: inputs.download_editor == 'true' && (inputs.enable_cache != 'true' || steps.cache-editor.outputs.cache-hit != 'true')
       shell: bash
       run: |
         GODOT_VERSION="${{ inputs.version }}"
@@ -49,14 +72,46 @@ runs:
           GODOT_RELEASE="$GODOT_VERSION"
         fi
         BIN_PATH="${{ inputs.bin-path }}"
-        DOWNLOAD_EDITOR="${{ inputs.download_editor }}"
         MONO="${{ inputs.mono }}"
 
-        if [ -d "$BIN_PATH" ]; then
-          rm -rf "$BIN_PATH"
-        fi
         mkdir -p "$BIN_PATH"
 
+        # Detect OS using GitHub Actions runner.os
+        if [ "${{ runner.os }}" == "Linux" ]; then
+          GODOT_PLATFORM="linux.x86_64"
+        elif [ "${{ runner.os }}" == "macOS" ]; then
+          GODOT_PLATFORM="macos.universal"
+        elif [ "${{ runner.os }}" == "Windows" ]; then
+          GODOT_PLATFORM="win64.exe"
+        else
+          echo "Unknown OS: ${{ runner.os }}"; exit 1
+        fi
+        # Determine if mono build is needed
+        if [[ "$MONO" == "true" ]]; then
+          # Linux mono uses _ instead of . in platform
+          if [ "$GODOT_PLATFORM" == "linux.x86_64" ]; then
+            GODOT_EDITOR_NAME="Godot_v${GODOT_VERSION}_mono_linux_x86_64.zip"
+          # Windows mono uses win64 (not win64.exe) in filename
+          elif [ "$GODOT_PLATFORM" == "win64.exe" ]; then
+            GODOT_EDITOR_NAME="Godot_v${GODOT_VERSION}_mono_win64.zip"
+          else
+            GODOT_EDITOR_NAME="Godot_v${GODOT_VERSION}_mono_${GODOT_PLATFORM}.zip"
+          fi
+        else
+          GODOT_EDITOR_NAME="Godot_v${GODOT_VERSION}_${GODOT_PLATFORM}.zip"
+        fi
+        GODOT_RELEASE_URL="https://github.com/${{ inputs.repo }}/releases/download/${GODOT_RELEASE}/$GODOT_EDITOR_NAME"
+        echo "Downloading $GODOT_RELEASE_URL"
+        curl -L "$GODOT_RELEASE_URL" -o godot_editor.zip
+        unzip -o godot_editor.zip -d "$BIN_PATH"
+        chmod -R +x "$BIN_PATH"/*
+    - name: Setup Godot Environment
+      shell: bash
+      run: |
+        BIN_PATH="${{ inputs.bin-path }}"
+        DOWNLOAD_EDITOR="${{ inputs.download_editor }}"
+
+        # Always set environment variables if editor is enabled
         if [[ "$DOWNLOAD_EDITOR" == "true" ]]; then
           # Detect OS using GitHub Actions runner.os
           if [ "${{ runner.os }}" == "Linux" ]; then
@@ -68,25 +123,7 @@ runs:
           else
             echo "Unknown OS: ${{ runner.os }}"; exit 1
           fi
-          # Determine if mono build is needed
-          if [[ "$MONO" == "true" ]]; then
-            # Linux mono uses _ instead of . in platform
-            if [ "$GODOT_PLATFORM" == "linux.x86_64" ]; then
-              GODOT_EDITOR_NAME="Godot_v${GODOT_VERSION}_mono_linux_x86_64.zip"
-            # Windows mono uses win64 (not win64.exe) in filename
-            elif [ "$GODOT_PLATFORM" == "win64.exe" ]; then
-              GODOT_EDITOR_NAME="Godot_v${GODOT_VERSION}_mono_win64.zip"
-            else
-              GODOT_EDITOR_NAME="Godot_v${GODOT_VERSION}_mono_${GODOT_PLATFORM}.zip"
-            fi
-          else
-            GODOT_EDITOR_NAME="Godot_v${GODOT_VERSION}_${GODOT_PLATFORM}.zip"
-          fi
-          GODOT_RELEASE_URL="https://github.com/${{ inputs.repo }}/releases/download/${GODOT_RELEASE}/$GODOT_EDITOR_NAME"
-          echo "Downloading $GODOT_RELEASE_URL"
-          curl -L "$GODOT_RELEASE_URL" -o godot_editor.zip
-          unzip -o godot_editor.zip -d "$BIN_PATH"
-          chmod -R +x "$BIN_PATH"/*
+
           # Find the Godot binary depending on platform
           GODOT_BIN_PATH=""
           if [[ "$GODOT_PLATFORM" == macos* ]]; then
@@ -99,19 +136,22 @@ runs:
           else
             GODOT_BIN_PATH=$(find "$BIN_PATH" -type f -executable -name "Godot*" | head -n 1)
           fi
-          # Convert to absolute path (portable way)
-          if [[ "$GODOT_BIN_PATH" != /* ]]; then
-            GODOT_BIN_PATH_ABS="$(pwd)/$GODOT_BIN_PATH"
-          else
-            GODOT_BIN_PATH_ABS="$GODOT_BIN_PATH"
+
+          if [[ -n "$GODOT_BIN_PATH" ]]; then
+            # Convert to absolute path (portable way)
+            if [[ "$GODOT_BIN_PATH" != /* ]]; then
+              GODOT_BIN_PATH_ABS="$(pwd)/$GODOT_BIN_PATH"
+            else
+              GODOT_BIN_PATH_ABS="$GODOT_BIN_PATH"
+            fi
+            echo "GODOT4=$GODOT_BIN_PATH_ABS" >> $GITHUB_ENV
+            echo "GODOT4_BIN=$GODOT_BIN_PATH_ABS" >> $GITHUB_ENV
+            echo "$(dirname "$GODOT_BIN_PATH_ABS")" >> $GITHUB_PATH
           fi
-          echo "GODOT4=$GODOT_BIN_PATH_ABS" >> $GITHUB_ENV
-          echo "GODOT4_BIN=$GODOT_BIN_PATH_ABS" >> $GITHUB_ENV
-          echo "$(dirname "$GODOT_BIN_PATH_ABS")" >> $GITHUB_PATH
         fi
     - name: Download and Setup Godot Templates
       shell: bash
-      if: inputs.download_template == 'true'
+      if: inputs.download_template == 'true' && (inputs.enable_cache != 'true' || steps.cache-templates.outputs.cache-hit != 'true')
       run: |
         GODOT_VERSION="${{ inputs.version }}"
         GODOT_RELEASE="${{ inputs.release-tag }}"

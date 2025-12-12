@@ -16,6 +16,7 @@ Sets up the Godot Engine from the official GitHub releases for Linux, macOS, or 
 - `download_editor`: Download the Godot Editor binary (`true`/`false`, default: `true`)
 - `download_template`: Download export templates (`true`/`false`, default: `false`)
 - `mono`: Download Mono version (C# support) (`true`/`false`, default: `false`)
+- `enable_cache`: Enable caching of downloaded files (`true`/`false`, default: `false`)
 
 ## Outputs
 
