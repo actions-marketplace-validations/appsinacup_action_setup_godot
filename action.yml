@@ -143,20 +143,31 @@ runs:
         version_dot=$(echo "$GODOT_VERSION" | sed 's/-/./')
         echo "Unzipping template"
         echo "Version dot: $version_dot"
-        # Set export path based on platform
+        # Set export path based on platform (use HOME / APPDATA, avoid hardcoded /Users)
         if [[ "$PLATFORM" == "macos" ]]; then
-          EXPORT_PATH="/Users/runner/Library/Application Support/Godot/export_templates/$version_dot"
+          EXPORT_PATH="$HOME/Library/Application Support/Godot/export_templates/$version_dot"
         elif [[ "$PLATFORM" == "linux" ]]; then
           EXPORT_PATH="$HOME/.local/share/godot/export_templates/$version_dot"
         else
-          EXPORT_PATH="$HOME/AppData/Roaming/Godot/export_templates/$version_dot"
+          # On Windows prefer APPDATA, fallback to HOME
+          if [ -n "$APPDATA" ]; then
+            EXPORT_PATH="$APPDATA/Godot/export_templates/$version_dot"
+          else
+            EXPORT_PATH="$HOME/AppData/Roaming/Godot/export_templates/$version_dot"
+          fi
         fi
         mkdir -p "$EXPORT_PATH"
-        unzip -o "$BIN_PATH/templates/$file" -d "$EXPORT_PATH"
-        # Move up all files from templates/ if present
-        if [ -d "$EXPORT_PATH/templates" ]; then
-          mv "$EXPORT_PATH/templates"/* "$EXPORT_PATH/"
-          rmdir "$EXPORT_PATH/templates"
+        # Create temp dir for extraction
+        TEMP_DIR=$(mktemp -d)
+        unzip -o "$BIN_PATH/templates/$file" -d "$TEMP_DIR"
+        # Move contents of templates folder to export path
+        if [ -d "$TEMP_DIR/templates" ]; then
+          mv "$TEMP_DIR/templates"/* "$EXPORT_PATH/"
+        else
+          # If no templates folder, move everything
+          mv "$TEMP_DIR"/* "$EXPORT_PATH/"
         fi
+        # Clean up temp dir
+        rm -rf "$TEMP_DIR"
         ls "$EXPORT_PATH"
         echo "GODOT_TEMPLATE=$EXPORT_PATH" >> $GITHUB_ENV
